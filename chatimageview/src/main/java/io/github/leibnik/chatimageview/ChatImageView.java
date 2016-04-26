@@ -16,6 +16,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.NinePatchDrawable;
+import android.net.Uri;
 import android.util.AttributeSet;
 import android.widget.ImageView;
 
@@ -24,9 +25,9 @@ import android.widget.ImageView;
  */
 public class ChatImageView extends ImageView {
 
-    private static final int DIRECTION_LEFT = 0;
-    private static final int DEFAULT_COLOR_DRAWABLE_DIMENSION = 250;
-    private static final Bitmap.Config BITMAP_CONFIG = Bitmap.Config.ARGB_8888;
+    private final int DIRECTION_LEFT = 0;
+    private final Bitmap.Config BITMAP_CONFIG = Bitmap.Config.ARGB_8888;
+    private final int DEFAULT_COLOR_DRAWABLE_DIMENSION = dp2px(250);
 
     // 箭头宽度
     private float mArrowWidth;
@@ -63,11 +64,11 @@ public class ChatImageView extends ImageView {
     private void init(Context context, AttributeSet attrs) {
         TypedArray ta = context.obtainStyledAttributes(attrs, R.styleable.ChatImageView);
         mNinePatchDrawable = (NinePatchDrawable) ta.getDrawable(R.styleable.ChatImageView_ninePNG);
-        mArrowHeight = ta.getDimension(R.styleable.ChatImageView_arrow_height, 20);
+        mArrowHeight = ta.getDimension(R.styleable.ChatImageView_arrow_height, dp2px(20));
         mArrowWidth = ta.getDimension(R.styleable.ChatImageView_arrow_width, mArrowHeight);
         mArrowOffset = ta.getDimension(R.styleable.ChatImageView_offset, mArrowHeight / 2);
         mArrowTop = ta.getDimension(R.styleable.ChatImageView_arrow_top, mArrowHeight);
-        mRadius = ta.getDimension(R.styleable.ChatImageView_radius, 10);
+        mRadius = ta.getDimension(R.styleable.ChatImageView_radius, dp2px(10));
         mDirection = ta.getInteger(R.styleable.ChatImageView_direction, 0);
         ta.recycle();
 
@@ -92,32 +93,36 @@ public class ChatImageView extends ImageView {
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
-        if (mNinePatchDrawable != null) {
-            setupWithNinePatch(w, h);
-        } else {
-            setupWidthBitmapShader(w, h);
-        }
+        setup();
     }
 
-    private void setupWidthBitmapShader(int w, int h) {
+    private void setup() {
+        if (getWidth() == 0 && getHeight() == 0) {
+            return;
+        }
         if (mSrc == null) {
             return;
         }
+        if (mNinePatchDrawable != null) {
+            setupWithNinePatch();
+        } else {
+            setupWidthBitmapShader();
+        }
+    }
+
+    private void setupWidthBitmapShader() {
         mBitmapShader = new BitmapShader(mSrc, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
         mPaint.setShader(mBitmapShader);
-        updateMatrix(w, h);
+        updateMatrix();
     }
 
-    private void setupWithNinePatch(int w, int h) {
-        if (mSrc == null) {
-            return;
-        }
+    private void setupWithNinePatch() {
         mTarget = Bitmap.createBitmap(mSrc.getWidth(), mSrc.getHeight(), BITMAP_CONFIG);
         mCanvas = new Canvas(mTarget);
         mNinePatchDrawable.setBounds(0, 0, getRight() - getLeft(), getBottom() - getTop());
         mNinePatchDrawable.draw(mCanvas);
 
-        updateMatrix(w, h);
+        updateMatrix();
         mPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_IN));
         mCanvas.drawBitmap(mSrc, 0, 0, mPaint);
     }
@@ -190,21 +195,31 @@ public class ChatImageView extends ImageView {
     public void setImageBitmap(Bitmap bm) {
         super.setImageBitmap(bm);
         mSrc = bm;
+        setup();
     }
 
     @Override
     public void setImageDrawable(Drawable drawable) {
         super.setImageDrawable(drawable);
-        mSrc = DrawableToBitmap(drawable);
+        mSrc = getBitmapFromDrawable(drawable);
+        setup();
     }
 
     @Override
     public void setImageResource(int resId) {
         super.setImageResource(resId);
-        mSrc = DrawableToBitmap(getDrawable());
+        mSrc = getBitmapFromDrawable(getDrawable());
+        setup();
     }
 
-    private Bitmap DrawableToBitmap(Drawable drawable) {
+    @Override
+    public void setImageURI(Uri uri) {
+        super.setImageURI(uri);
+        mSrc = uri != null ?getBitmapFromDrawable(getDrawable()) : null;
+        setup();
+    }
+
+    private Bitmap getBitmapFromDrawable(Drawable drawable) {
         if (drawable instanceof BitmapDrawable) {
             return ((BitmapDrawable) drawable).getBitmap();
         }
@@ -222,17 +237,17 @@ public class ChatImageView extends ImageView {
         return bitmap;
     }
 
-    private void updateMatrix(int width, int height) {
+    private void updateMatrix() {
         float scale = 0f;
         float dx = 0f;
         float dy = 0f;
         if (mSrc.getWidth() / (float) mSrc.getHeight() >
-                width / (float) height) {
-            scale = height / (float) mSrc.getHeight();
-            dx = (width - mSrc.getWidth() * scale) * 0.5f;
+                getWidth() / (float) getHeight()) {
+            scale = getHeight() / (float) mSrc.getHeight();
+            dx = (getWidth() - mSrc.getWidth() * scale) * 0.5f;
         } else {
-            scale = width / (float) mSrc.getWidth();
-            dy = (height - mSrc.getHeight() * scale) * 0.5f;
+            scale = getWidth() / (float) mSrc.getWidth();
+            dy = (getHeight() - mSrc.getHeight() * scale) * 0.5f;
         }
         if (mNinePatchDrawable != null) {
             mCanvas.scale(scale, scale);
@@ -243,6 +258,10 @@ public class ChatImageView extends ImageView {
             matrix.postTranslate(dx, dy);
             mBitmapShader.setLocalMatrix(matrix);
         }
+    }
+    private int dp2px(float dipValue){
+        final float scale = getResources().getDisplayMetrics().density;
+        return (int)(dipValue * scale + 0.5f);
     }
 
 }
