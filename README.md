@@ -36,11 +36,11 @@ compile 'io.github.leibnik:chatimageview:1.0.1'
 * `app:radius`:圆角半径
 
 下图可以清晰看出各个属性的含义
-![](http://ww1.sinaimg.cn/middle/b5405c76gw1f3a7f730jmj214h0jntau.jpg)
+![](http://ww1.sinaimg.cn/mw690/b5405c76gw1f3a7f730jmj214h0jntau.jpg)
 
 # 效果图
 ![](http://ww3.sinaimg.cn/mw690/b5405c76gw1f3a6dsmvqzg20b40ggqg2.gif)
-![](http://ww4.sinaimg.cn/mw690/b5405c76gw1f3a5nx1ncwj20fc0rdwgz.jpg)
+![](http://ww4.sinaimg.cn/bmiddle/b5405c76gw1f3a5nx1ncwj20fc0rdwgz.jpg)
 
 # License
 [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0)
